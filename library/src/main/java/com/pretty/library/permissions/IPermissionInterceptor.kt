@@ -9,7 +9,7 @@ interface IPermissionInterceptor {
         callback: IPermissionCallback,
         permissions: Array<String>
     ) {
-
+        PermissionHelper.beginRequest(activity, permissions, callback)
     }
 
     /**

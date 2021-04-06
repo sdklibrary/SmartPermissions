@@ -4,10 +4,12 @@ import android.app.Activity
 import android.app.AppOpsManager
 import android.app.NotificationManager
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
+import androidx.fragment.app.FragmentActivity
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.pow
@@ -63,7 +65,7 @@ object PermissionUtils {
         return if (isAndroid11()) {
             Environment.isExternalStorageManager()
         } else {
-            SmartPermission.isGranted(context, Permission.STORAGE)
+            SmartPermission.isGranted(context, *Permission.STORAGE)
         }
     }
 
@@ -151,7 +153,7 @@ object PermissionUtils {
     /**
      * 判断某些权限是否全部被授予
      */
-    fun isGrantedPermissions(context: Context, permissions: Array<String>): Boolean {
+    fun isGrantedPermissions(context: Context, vararg permissions: String): Boolean {
         // 如果是安卓 6.0 以下版本就直接返回 true
         if (!isAndroid6()) {
             return true
@@ -333,7 +335,10 @@ object PermissionUtils {
      * @param permissions       需要请求的权限组
      * @param grantResults      允许结果组
      */
-    fun getGrantedPermissions(permissions: Array<out String>, grantResults: IntArray): ArrayList<String> {
+    fun getGrantedPermissions(
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ): ArrayList<String> {
         val grantedPermissions: ArrayList<String> = ArrayList()
         for (i in grantResults.indices) {
             // 把授予过的权限加入到集合中
@@ -349,6 +354,27 @@ object PermissionUtils {
      */
     fun getRandomRequestCode(): Int {
         return Random().nextInt(2.0.pow(8.0).toInt())
+    }
+
+    /**
+     * 寻找上下文中的 Activity 对象
+     */
+    fun findFragmentActivity(context: Context): FragmentActivity? {
+        var tempContext: Context? = context
+        do {
+            tempContext = when (tempContext) {
+                is FragmentActivity -> {
+                    return tempContext
+                }
+                is ContextWrapper -> {
+                    tempContext.baseContext
+                }
+                else -> {
+                    return null
+                }
+            }
+        } while (tempContext != null)
+        return null
     }
 
 }
