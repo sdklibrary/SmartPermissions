@@ -5,92 +5,93 @@ import android.content.pm.ApplicationInfo
 import androidx.fragment.app.Fragment
 import java.lang.ref.WeakReference
 
-class SmartPermission private constructor(context: Context) {
+object SmartPermission {
+
+    /** 权限设置页跳转请求码  */
+    const val REQUEST_CODE = 1024 + 1
+
+    /** 权限列表  */
+    private lateinit var mPermissions: Array<String>
 
     /**
      * 弱引用上下问
      */
-    private val wrContext: WeakReference<Context> = WeakReference(context)
+    private lateinit var wrContext: WeakReference<Context>
 
-    /** 权限列表  */
-    private var mPermissions: Array<out String>? = null
+    /**
+     * 权限请求拦截器
+     */
+    private var interceptor: IPermissionInterceptor? = null
 
-    fun permission(vararg permissions: String) = apply {
-        this.mPermissions = permissions
+    fun with(context: Context) = apply {
+        wrContext = WeakReference(context)
     }
 
-    @Suppress("UNCHECKED_CAST")
+    fun with(fragment: Fragment) = apply {
+        wrContext = WeakReference(fragment.activity!!)
+    }
+
+    /**
+     * 添加要请求的权限
+     */
+    fun permission(vararg permissions: String) = apply {
+        this.mPermissions = Array(permissions.size) {
+            permissions[it]
+        }
+    }
+
+    /**
+     * 设置权限请求拦截器
+     */
+    fun setInterceptor(interceptor: IPermissionInterceptor) = apply {
+        this.interceptor = interceptor
+    }
+
+    /**
+     * 开始请求权限
+     */
     fun request(callback: IPermissionCallback) {
         val context = wrContext.get()
-        val requestPermissions: Array<String> = mPermissions as Array<String>
-        if (context == null || requestPermissions.isNullOrEmpty()) {
+        if (context == null || mPermissions.isNullOrEmpty()) {
             return
         }
 
-        if (PermissionUtils.isGrantedPermissions(context, *requestPermissions)) {
+        if (PermissionUtils.isGrantedPermissions(context, *mPermissions)) {
             // 证明这些权限已经全部授予过，直接回调成功
-            callback.onGranted(requestPermissions, true)
+            callback.onGranted(mPermissions, true)
             return
         }
 
         val fragmentActivity = PermissionUtils.findFragmentActivity(context) ?: return
-        interceptor?.requestPermissions(fragmentActivity, callback, requestPermissions)
+        getInterceptor().requestPermissions(fragmentActivity, callback, mPermissions)
     }
 
-    companion object {
-        /** 权限设置页跳转请求码  */
-        const val REQUEST_CODE = 1024 + 1
+    /**
+     * 获取权限请求拦截器
+     */
+    fun getInterceptor(): IPermissionInterceptor {
+        return this.interceptor ?: object : IPermissionInterceptor {}
+    }
 
-        /**
-         * 权限请求拦截器
-         */
-        private var interceptor: IPermissionInterceptor? = null
+    /**
+     * 判断一个或多个权限是否全部授予了
+     */
+    fun isGranted(context: Context, permissions: ArrayList<String>): Boolean {
+        return isGranted(context, *permissions.toTypedArray())
+    }
 
-        /**
-         * 设置权限请求拦截器
-         */
-        fun setInterceptor(interceptor: IPermissionInterceptor) {
-            this.interceptor = interceptor
-        }
+    /**
+     * 判断一个或多个权限是否全部授予了
+     */
+    fun isGranted(context: Context, vararg permissions: String): Boolean {
+        return PermissionUtils.isGrantedPermissions(context, *permissions)
+    }
 
-        /**
-         * 获取权限请求拦截器
-         */
-        fun getInterceptor(): IPermissionInterceptor {
-            return this.interceptor ?: object : IPermissionInterceptor {}
-        }
-
-        /**
-         * 判断一个或多个权限是否全部授予了
-         */
-        fun isGranted(context: Context, permissions: ArrayList<String>): Boolean {
-            return isGranted(context, *permissions.toTypedArray())
-        }
-
-        /**
-         * 判断一个或多个权限是否全部授予了
-         */
-        fun isGranted(context: Context, vararg permissions: String): Boolean {
-            return PermissionUtils.isGrantedPermissions(context, *permissions)
-        }
-
-        /**
-         * 判断某个权限是否是特殊权限
-         */
-        fun isSpecial(permission: String): Boolean {
-            return PermissionUtils.isSpecialPermission(permission)
-        }
-
-
-        fun with(context: Context): SmartPermission {
-            return SmartPermission(context)
-        }
-
-        fun with(fragment: Fragment): SmartPermission {
-            return SmartPermission(fragment.activity!!)
-        }
-
-
+    /**
+     * 判断某个权限是否是特殊权限
+     */
+    fun isSpecial(permission: String): Boolean {
+        return PermissionUtils.isSpecialPermission(permission)
     }
 
 }

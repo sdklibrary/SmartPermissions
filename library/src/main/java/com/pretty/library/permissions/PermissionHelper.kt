@@ -272,7 +272,7 @@ class PermissionHelper : Fragment(), Runnable {
 
         if (!requestSpecialPermission) {
             //没有特色权限申请危险权限
-
+            requestDangerousPermission()
         }
 
     }

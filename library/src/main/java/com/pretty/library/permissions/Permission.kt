@@ -127,7 +127,7 @@ object Permission {
      * 处理拨出电话
      * @Deprecated("在 Android 10 已经过时，请见：https://developer.android.google.cn/reference/android/Manifest.permission?hl=zh_cn#PROCESS_OUTGOING_CALLS")
      */
-    val PROCESS_OUTGOING_CALLS = "android.permission.PROCESS_OUTGOING_CALLS"
+    const val PROCESS_OUTGOING_CALLS = "android.permission.PROCESS_OUTGOING_CALLS"
 
     /**
      * 接听电话（需要 Android 8.0 及以上，Android 8.0 以下可以采用模拟耳机按键事件来实现接听电话，这种方式不需要权限）
