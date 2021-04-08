@@ -6,6 +6,7 @@ import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import android.util.SparseBooleanArray
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
@@ -33,7 +34,9 @@ class PermissionHelper : Fragment(), Runnable {
      */
     private var mCallBack: IPermissionCallback? = null
 
-    override fun onAttach(context: Context) {
+    override fun onAttach(
+        context: Context
+    ) {
         super.onAttach(context)
         val activity = activity ?: return
         mScreenOrientation = activity.requestedOrientation
@@ -54,15 +57,16 @@ class PermissionHelper : Fragment(), Runnable {
 
     override fun onResume() {
         super.onResume()
-        if (mSpecialRequest)
+        if (mSpecialRequest) {
             return
+        }
         mSpecialRequest = true
         requestSpecialPermission()
     }
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
-        permissionArray: Array<out String>,
+        permissions: Array<String>,
         grantResults: IntArray
     ) {
         val activity = activity ?: return
@@ -148,18 +152,23 @@ class PermissionHelper : Fragment(), Runnable {
         )
 
         // 证明还有一部分权限被成功授予，回调成功接口
-
-        // 证明还有一部分权限被成功授予，回调成功接口
         if (grantedPermission.isNotEmpty()) {
-            SmartPermission.getInterceptor()
-                .grantedPermissions(activity, mCallBack!!, grantedPermission.toTypedArray(), false)
+            SmartPermission.getInterceptor().grantedPermissions(
+                activity, mCallBack!!,
+                grantedPermission.toTypedArray(),
+                false
+            )
         }
 
         // 将 Fragment 从 Activity 移除
         detachActivity(activity)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?
+    ) {
         val activity = activity ?: return
         val arguments = arguments
         if (arguments == null || requestCode != arguments.getInt(REQUEST_CODE) || mDangerousRequest) {
@@ -203,16 +212,16 @@ class PermissionHelper : Fragment(), Runnable {
             return
         }
 
-        val permissions = arguments.getStringArray(REQUEST_PERMISSIONS)
-        if (permissions == null || permissions.isEmpty()) {
+        val allPermissions = arguments.getStringArray(REQUEST_PERMISSIONS)
+        if (allPermissions == null || allPermissions.isEmpty()) {
             detachActivity(activity)
             return
         }
 
         // 是否需要申请特殊权限
         var requestSpecialPermission = false
-        if (PermissionUtils.containsSpecialPermission(permissions)) {
-            if (permissions.contains(Permission.MANAGE_EXTERNAL_STORAGE) &&
+        if (PermissionUtils.containsSpecialPermission(allPermissions)) {
+            if (allPermissions.contains(Permission.MANAGE_EXTERNAL_STORAGE) &&
                 !PermissionUtils.isGrantedStoragePermission(activity)
             ) {
                 // 跳转到存储权限设置界面
@@ -225,7 +234,7 @@ class PermissionHelper : Fragment(), Runnable {
                 }
             }
 
-            if (permissions.contains(Permission.REQUEST_INSTALL_PACKAGES) &&
+            if (allPermissions.contains(Permission.REQUEST_INSTALL_PACKAGES) &&
                 !PermissionUtils.isGrantedInstallPermission(activity)
             ) {
                 // 跳转到安装权限设置界面
@@ -236,7 +245,7 @@ class PermissionHelper : Fragment(), Runnable {
                 requestSpecialPermission = true
             }
 
-            if (permissions.contains(Permission.SYSTEM_ALERT_WINDOW) &&
+            if (allPermissions.contains(Permission.SYSTEM_ALERT_WINDOW) &&
                 !PermissionUtils.isGrantedWindowPermission(activity)
             ) {
                 // 跳转到悬浮窗设置页面
@@ -247,7 +256,7 @@ class PermissionHelper : Fragment(), Runnable {
                 requestSpecialPermission = true
             }
 
-            if (permissions.contains(Permission.NOTIFICATION_SERVICE) &&
+            if (allPermissions.contains(Permission.NOTIFICATION_SERVICE) &&
                 !PermissionUtils.isGrantedNotifyPermission(activity)
             ) {
                 // 跳转到通知栏权限设置页面
@@ -258,7 +267,7 @@ class PermissionHelper : Fragment(), Runnable {
                 requestSpecialPermission = true
             }
 
-            if (permissions.contains(Permission.WRITE_SETTINGS) &&
+            if (allPermissions.contains(Permission.WRITE_SETTINGS) &&
                 !PermissionUtils.isGrantedSettingPermission(activity)
             ) {
                 // 跳转到系统设置权限设置页面
@@ -364,6 +373,7 @@ class PermissionHelper : Fragment(), Runnable {
     private fun detachActivity(activity: FragmentActivity) {
         activity.supportFragmentManager.beginTransaction().remove(this)
             .commitAllowingStateLoss()
+        Log.i("SmartPermission", "PermissionHelper DetachActivity")
     }
 
     companion object {

@@ -1,6 +1,7 @@
 package com.pretty.demo.permissions
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
@@ -31,12 +32,14 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             R.id.btn_main_request_1 -> {
                 SmartPermission.with(this)
                     .permission(Permission.CAMERA)
-//                    .setInterceptor(object : IPermissionInterceptor {
-//
-//                    })
+                    .setInterceptor(MyPermissionInterceptor())
                     .request(object : IPermissionCallback {
                         override fun onGranted(permissions: Array<String>, all: Boolean) {
-
+                            if (all) {
+                                Log.i("SmartPermission", "全部权限授权")
+                            } else {
+                                Log.i("SmartPermission", "部分权限授权")
+                            }
                         }
                     })
             }
