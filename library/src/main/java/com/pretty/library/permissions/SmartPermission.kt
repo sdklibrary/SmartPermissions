@@ -1,7 +1,7 @@
 package com.pretty.library.permissions
 
+import android.app.Activity
 import android.content.Context
-import android.content.pm.ApplicationInfo
 import androidx.fragment.app.Fragment
 import java.lang.ref.WeakReference
 
@@ -94,4 +94,19 @@ object SmartPermission {
         return PermissionUtils.isSpecialPermission(permission)
     }
 
+    /**
+     * 更加权限类型调整到合适的权限设置页
+     */
+    fun startPermissionActivity(
+        activity: Activity,
+        permissions: Array<String>,
+        requestCode: Int = REQUEST_CODE
+    ) {
+        activity.startActivityForResult(
+            PermissionIntent.getSmartPermissionIntent(
+                activity,
+                *permissions
+            ), requestCode
+        )
+    }
 }
