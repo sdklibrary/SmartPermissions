@@ -57,7 +57,18 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                         }
                     })
             }
-
+            R.id.btn_main_request_3 -> {
+                SmartPermission.with(this)
+                    .permission(Permission.ACCESS_BACKGROUND_LOCATION)
+                    .setInterceptor(MyPermissionInterceptor())
+                    .request(object : IPermissionCallback {
+                        override fun onGranted(permissions: Array<String>, all: Boolean) {
+                            if (all) {
+                                showToast("获取定位权限成功")
+                            }
+                        }
+                    })
+            }
         }
     }
 
